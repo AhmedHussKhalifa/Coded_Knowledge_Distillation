@@ -6,7 +6,7 @@ By Ahmed H. Salamah, Shayan Mohajer Hamidi, En-Hui Yang.
 
 
 
-:fire: **DIST: a simple and effective KD method.**
+:fire: **CKD: a coded teacher, that see better.**
 
 ## Updates  
 
