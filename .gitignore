@@ -1,7 +1,10 @@
 .idea/
 data/
+save/
 output*/
 ckpts/
+sh_*/
+experiments/
 *.pth
 *.t7
 *.png

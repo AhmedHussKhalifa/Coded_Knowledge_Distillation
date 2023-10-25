@@ -6,6 +6,19 @@ import torch
 
 from .util import AverageMeter, accuracy
 
+import torchvision.transforms as transforms
+import torchvision.transforms.functional as TF
+import random
+
+# NEW
+from dataset.ckd_selector import BatchProcessor, CKD_selector, CKD_selector_parallel
+from multiprocessing import set_start_method
+import multiprocessing
+import socket
+import os
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+from dataset.ckd_selector import CIFAR100Dataset_simple
 
 def train_vanilla(epoch, train_loader, model, criterion, optimizer, opt):
     """vanilla training"""
@@ -90,9 +103,6 @@ def train_distill(epoch, train_loader, module_list, criterion_list, optimizer, o
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
-
-    # top1_t = AverageMeter()
-    # top5_t = AverageMeter()
 
     end = time.time()
     for idx, data in enumerate(train_loader):
@@ -191,10 +201,6 @@ def train_distill(epoch, train_loader, module_list, criterion_list, optimizer, o
         top1.update(acc1[0], input.size(0))
         top5.update(acc5[0], input.size(0))
 
-        # measure accuracy and record loss for teacher 
-        # acc1_t, acc5_t = accuracy(logit_t, target, topk=(1, 5))
-        # top1_t.update(acc1_t[0], input.size(0))
-        # top5_t.update(acc5_t[0], input.size(0))
         # ===================backward=====================
         optimizer.zero_grad()
         loss.backward()
@@ -216,10 +222,9 @@ def train_distill(epoch, train_loader, module_list, criterion_list, optimizer, o
                 data_time=data_time, loss=losses, top1=top1, top5=top5))
             sys.stdout.flush()
 
-    print('Student ==> * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
+    print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
           .format(top1=top1, top5=top5))
-    # print('Teacher ==> * Acc@1 {top1_t.avg:.3f} Acc@5 {top5_t.avg:.3f}'
-    #       .format(top1_t=top1_t, top5_t=top5_t))
+
     return top1.avg, losses.avg
 
 
@@ -236,7 +241,6 @@ def validate(val_loader, model, criterion, opt):
     with torch.no_grad():
         end = time.time()
         for idx, (input, target) in enumerate(val_loader):
-
             input = input.float()
             if torch.cuda.is_available():
                 input = input.cuda()
@@ -268,4 +272,231 @@ def validate(val_loader, model, criterion, opt):
         print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
               .format(top1=top1, top5=top5))
 
+    return top1.avg, top5.avg, losses.avg
+
+def get_data_folder():
+    """
+    return server-dependent path to store the data
+    """
+    hostname = socket.gethostname()
+    data_folder = './data/'
+
+    if not os.path.isdir(data_folder):
+        os.makedirs(data_folder)
+
+    return data_folder
+
+
+def custom_collate_fn(batch):
+    images = [item[0] for item in batch]
+    paths = [item[1] for item in batch]
+    return images, paths
+
+
+    
+def validate_ckd_final(val_loader, model, criterion, opt):
+    """validation"""
+    """ here we are generating before inference """
+    torch.cuda.empty_cache()
+    batch_time = AverageMeter()
+    losses = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
+    model.eval()
+
+    # --------------------------------------------------------------------
+    # Change the loaded data everytime
+    data_folder = get_data_folder()
+    # ckd_set = datasets.CIFAR100(root=data_folder,
+    #                              download=True,
+    #                              train=False)
+
+    ckd_set = CIFAR100Dataset_simple(root=data_folder,
+                                        download=True,
+                                        train=False)
+
+
+    batch_size=500
+    ckd_loader = DataLoader (ckd_set, \
+                             batch_size=batch_size, \
+                             collate_fn=custom_collate_fn, \
+                             shuffle=False, \
+                             num_workers=opt.num_workers)
+
+    ckd_selector = CKD_selector_parallel(model=model, delta=5, train=False, batch_size=batch_size)
+    num_channels, height, width = 3 , 32 , 32
+    DataBatch =  torch.zeros(len(ckd_set.data), num_channels, height, width, dtype=torch.float32)
+    start_time = time.time()    
+    with torch.no_grad():
+        for idx, (input, target) in enumerate(ckd_loader):
+            # start_time = time.time()
+            st = batch_size * idx
+            ed = st +  len(input)
+            DataBatch[st:ed] = ckd_selector.groupCal(input, target, len(target))    
+
+    
+    ckd_set = CIFAR100Dataset_simple(root=data_folder,
+                                        download=True,
+                                        train=False)
+    ckd_set.data = DataBatch
+
+    del DataBatch
+
+    ckd_loader = DataLoader (ckd_set, \
+                             batch_size=batch_size, \
+                             shuffle=False, \
+                             num_workers=opt.num_workers,
+                             pin_memory=True)
+    
+    # switch to evaluate mode
+    with torch.no_grad():
+        end = time.time()
+        for idx, (input, target) in enumerate(ckd_loader):
+            
+            if torch.cuda.is_available():
+                input = input.cuda()
+                target = torch.tensor(target).cuda()
+
+            # compute output
+            output = model(input)
+            loss = criterion(output, target)
+
+            # measure accuracy and record loss
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            losses.update(loss.item(), input.size(0))
+            top1.update(acc1[0], input.size(0))
+            top5.update(acc5[0], input.size(0))
+
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if idx % opt.print_freq == 0:
+                print('Test: [{0}/{1}]\t'
+                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                      'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                      'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                       idx, len(val_loader), batch_time=batch_time, loss=losses,
+                       top1=top1, top5=top5))
+
+        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
+              .format(top1=top1, top5=top5))
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("CKD outter Elapsed time:", elapsed_time)
+    return top1.avg, top5.avg, losses.avg
+
+
+
+def validate_ckd_while_inference(val_loader, model, criterion, opt):
+    """validation"""
+
+    """ On the fly generation """
+    batch_time = AverageMeter()
+    losses = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
+    model.eval()
+
+    start_time = time.time() 
+
+    set_start_method('spawn', force=True)
+    # Create a BatchProcessor object with batch_size workers
+    # batch_processor = BatchProcessor(num_workers=multiprocessing.cpu_count())
+    batch_processor = BatchProcessor(num_workers=64)
+    # switch to evaluate mode
+    ckd_selector = CKD_selector(model=model, delta=5, train=False, batch_size=int(opt.batch_size/2))
+    with torch.no_grad():
+        end = time.time()
+        for idx, (input, target) in enumerate(val_loader):
+            # --------------------------------------------------------------------
+            # input = batch_processor.process_batch((input, target), ckd_selector.distill)
+            input = ckd_selector.distillBatch(input, target, len(target))
+            # --------------------------------------------------------------------
+            
+            if torch.cuda.is_available():
+                target = torch.tensor(target).cuda()
+
+            # compute output
+            output = model(input)
+            loss = criterion(output, target)
+
+            # measure accuracy and record loss
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            losses.update(loss.item(), input.size(0))
+            top1.update(acc1[0], input.size(0))
+            top5.update(acc5[0], input.size(0))
+
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if idx % opt.print_freq == 0:
+                print('Test: [{0}/{1}]\t'
+                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                      'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                      'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                       idx, len(val_loader), batch_time=batch_time, loss=losses,
+                       top1=top1, top5=top5))
+
+        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
+              .format(top1=top1, top5=top5))
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("CKD outter Elapsed time:", elapsed_time)
+    return top1.avg, top5.avg, losses.avg
+
+
+
+def validate_ckd(val_loader, model, criterion, opt):
+    """validation"""
+    batch_time = AverageMeter()
+    losses = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
+
+    start_time = time.time() 
+
+    # switch to evaluate mode
+    model.eval()
+
+    with torch.no_grad():
+        end = time.time()
+        for idx, (input, target) in enumerate(val_loader):
+            
+            # input = input.float()
+            if torch.cuda.is_available():
+                input = input.cuda()
+                target = target.cuda()
+
+            # compute output
+            output = model(input)
+            loss = criterion(output, target)
+
+            # measure accuracy and record loss
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            losses.update(loss.item(), input.size(0))
+            top1.update(acc1[0], input.size(0))
+            top5.update(acc5[0], input.size(0))
+
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if idx % opt.print_freq == 0:
+                print('Test: [{0}/{1}]\t'
+                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                      'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                      'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                       idx, len(val_loader), batch_time=batch_time, loss=losses,
+                       top1=top1, top5=top5))
+
+        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
+              .format(top1=top1, top5=top5))
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("CKD outter Elapsed time:", elapsed_time)
     return top1.avg, top5.avg, losses.avg

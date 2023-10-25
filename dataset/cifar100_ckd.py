@@ -6,35 +6,34 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from PIL import Image
+# import lightly
+import random
+from PIL import ImageFilter
+import torch
+from PIL import Image as im_
+from PIL import ImageOps as imo
+from PIL import ImageEnhance as ime
+from PIL import ImageFilter as imf
+import copy
 
-"""
-mean = {
-    'cifar100': (0.5071, 0.4867, 0.4408),
-}
+import torch.nn.functional as F
 
-std = {
-    'cifar100': (0.2675, 0.2565, 0.2761),
-}
-"""
+from multiprocessing import set_start_method
+from io import BytesIO
 
+# from dataset.ckd_selector import CKD, CKD_CIFAR100Dataset, CIFAR100Dataset_2_INPUTS
 
 def get_data_folder():
     """
     return server-dependent path to store the data
     """
     hostname = socket.gethostname()
-    if hostname.startswith('visiongpu'):
-        data_folder = '/data/vision/phillipi/rep-learn/datasets'
-    elif hostname.startswith('yonglong-home'):
-        data_folder = '/home/yonglong/Data/data'
-    else:
-        data_folder = './data/'
+    data_folder = './data/'
 
     if not os.path.isdir(data_folder):
         os.makedirs(data_folder)
 
     return data_folder
-
 
 class CIFAR100Instance(datasets.CIFAR100):
     """CIFAR100Instance Dataset.
@@ -46,13 +45,8 @@ class CIFAR100Instance(datasets.CIFAR100):
                          transform=transform, target_transform=target_transform)
 
     def __getitem__(self, index):
-        # if self.train:
-        #     img, target = self.train_data[index], self.train_labels[index]
-        # else:
-        #     img, target = self.test_data[index], self.test_labels[index]
-        # New version of torchvision datasets only has .data, .target, not train_data and test_data
         img, target = self.data[index], self.targets[index]
-
+        
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
         img = Image.fromarray(img)
@@ -63,10 +57,10 @@ class CIFAR100Instance(datasets.CIFAR100):
         if self.target_transform is not None:
             target = self.target_transform(target)
 
+        # return imgs_extra, target_out, index
         return img, target, index
 
-
-def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False):
+def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False, model=None):
     """
     cifar 100
     """
@@ -113,6 +107,102 @@ def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False):
     else:
         return train_loader, test_loader
 
+def custom_collate_fn(batch):
+    images = [item[0] for item in batch]
+    paths = [item[1] for item in batch]
+    return images, paths
+    
+def get_cifar100_dataloaders_CKD(batch_size=128, num_workers=8, is_instance=False, model_t=None):
+    """
+    cifar 100
+    """
+   
+    data_folder = get_data_folder()
+
+    train_transform = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
+    ])
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
+    ])
+
+    if is_instance:
+        print("==> is_instance")
+        train_set = CIFAR100Instance(root=data_folder,
+                                     download=True,
+                                     train=True,
+                                     transform=train_transform)
+        n_data = len(train_set)
+    else:
+        train_set = datasets.CIFAR100(root=data_folder,
+                                      download=True,
+                                      train=True,
+                                      transform=train_transform)
+
+    train_loader = DataLoader(train_set,
+                              batch_size=batch_size,
+                              shuffle=True,
+                              num_workers=num_workers)
+    # Default
+    test_set = datasets.CIFAR100(root=data_folder,
+                                 download=True,
+                                 train=False,
+                                 transform=test_transform)
+
+    test_loader = DataLoader(test_set,
+                             batch_size=int(batch_size/2),
+                             shuffle=False,
+                             num_workers=int(num_workers/2))
+
+    # After loadding the data --> No tranformation
+    # test_set = datasets.CIFAR100(root=data_folder,
+    #                              download=True,
+    #                              train=False)
+    # test_loader = DataLoader (test_set, \
+    #                          batch_size=int(batch_size/2), \
+    #                          collate_fn=custom_collate_fn, \
+    #                          num_workers=num_workers,
+    #                          pin_memory=True)
+
+    # ---------------------------------------------------------------------
+    #  model_t = copy.deepcopy(model_t)
+    # test_set = CKD_CIFAR100Dataset(  root=data_folder,
+    #                                     download=True,
+    #                                     train=False,
+    #                                     transform=test_transform,
+    #                                     model=model_t)
+
+
+    # ---------------------------------------------------------------------
+    #  Add it to the transformation 
+    # test_transform = CKD(
+    #                         # model=copy.deepcopy(model_t).eval(), \
+    #                         model=model_t.eval(), \
+    #                         delta=5, \
+    #                         test_transform=test_transform, \
+    #                         train=False, \
+    #                         )
+
+    # test_set = CIFAR100Dataset_2_INPUTS(  root=data_folder,
+    #                                     download=True,
+    #                                     train=False,
+    #                                     transform=test_transform)
+
+    # test_loader = DataLoader(test_set,
+    #                          batch_size=int(batch_size/2),
+    #                          shuffle=False,
+    #                          num_workers=int(num_workers/2))
+
+    # ---------------------------------------------------------------------
+
+    if is_instance:
+        return train_loader, test_loader, n_data
+    else:
+        return train_loader, test_loader
 
 class CIFAR100InstanceSample(datasets.CIFAR100):
     """
@@ -131,7 +221,7 @@ class CIFAR100InstanceSample(datasets.CIFAR100):
         num_samples = len(self.data)
         label = self.targets
 
-        print("==> CRD default")
+        print("CKD ==> CRD")
 
         # if self.train:
         #     num_samples = len(self.train_data)
@@ -163,11 +253,6 @@ class CIFAR100InstanceSample(datasets.CIFAR100):
         self.cls_negative = np.asarray(self.cls_negative)
 
     def __getitem__(self, index):
-        # if self.train:
-        #     img, target = self.train_data[index], self.train_labels[index]
-        # else:
-        #     img, target = self.test_data[index], self.test_labels[index]
-
         # New version of torchvision datasets only has .data, .target, not train_data and test_data
         img, target = self.data[index], self.targets[index]
 

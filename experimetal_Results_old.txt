@@ -1,0 +1,122 @@
+    S:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_1	21	55.6099967956543
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_1	21	55.62999725341797
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:100000.0_1	21	55.599998474121094
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:1000.0_1	21	54.84000015258789
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:10000.0_1	21	55.57999801635742
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:50000.0_1	21	56.209999084472656
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:70000.0_1	21	57.529998779296875
+    
+    S:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_1	21	50.03999710083008
+
+----
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:80000.0_1	240	71.31999969482422
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:70000.0_1	240	71.02999877929688
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:50000.0_1	240	71.08999633789062
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:60000.0_1	240	70.66999816894531
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_1	240	70.93999481201172
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:80000.0_2	240	70.95999908447266
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:70000.0_2	240	71.13999938964844
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:50000.0_2	240	71.13999938964844
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:60000.0_2	240	71.33999633789062
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:10.0_1	240	65.43999481201172
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:3.0_1	240	65.31999969482422
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_1	240	65.5999984741211
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:0.5_1	240	67.47999572753906
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:0.1_1	240	64.95999908447266
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:0.05_1	240	65.76000213623047
+
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_2	240	66.8699951171875
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_2	240	60.73999786376953
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_1	240	65.86000061035156
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_1	240	58.349998474121094
+
+
+----
+
+Simple change the input_ckd from input. My observation that something is wrong in the loaded image.
+
+S:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_1	240	75.50999450683594
+S:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_1	240	67.81999969482422
+S:wrn_16_2_T:wrn_40_2_cifar100_kd_r:0.1_a:0.9_b:0.0_1	240	75.0
+S:wrn_16_2_T:wrn_40_2_cifar100_attention_r:1_a:0.0_b:1000.0_1	240	74.54000091552734
+S:wrn_16_2_T:wrn_40_2_cifar100_nst_r:1_a:0.0_b:50.0_1	240	74.33000183105469
+S:wrn_16_2_T:wrn_40_2_cifar100_vid_r:1_a:0.0_b:1.0_1	240	74.15999603271484
+S:wrn_16_2_T:wrn_40_2_cifar100_hint_r:1_a:0.0_b:100.0_1	240	73.97000122070312
+S:wrn_16_2_T:wrn_40_2_cifar100_similarity_r:1_a:0.0_b:3000.0_1	240	73.95999908447266
+S:wrn_16_2_T:wrn_40_2_cifar100_rkd_r:1_a:0.0_b:1.0_1	240	73.6199951171875
+S:wrn_16_2_T:wrn_40_2_cifar100_correlation_r:1_a:0.0_b:0.02_1	240	73.22000122070312
+S:wrn_16_2_T:wrn_40_2_cifar100_factor_r:1_a:0.0_b:200.0_1	240	73.19999694824219
+S:wrn_16_2_T:wrn_40_2_cifar100_fsp_r:1_a:0.0_b:50.0_1	240	72.68000030517578
+
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_3	240	72.41999816894531 --> use the augmentation settings stored in our container
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_4	240	75.00999450683594 --> use the default augmentation
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_5	240	72.2699966430664  --> use the compressed version with augmentation settings stored in our container
+
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_999	240	72.54999542236328
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_999	240	65.36000061035156
+
+
+----
+
+If I have used the crop and resize image for ImageNet, which will not match the correct augmentation
+
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_similarity_r:1_a:0.0_b:3000.0_1	240	70.37999725341797
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_kd_r:0.1_a:0.9_b:0.0_1	240	73.20999908447266
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_1	240	66.97000122070312
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_fsp_r:1_a:0.0_b:50.0_1	240	71.7699966430664
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_rkd_r:1_a:0.0_b:1.0_1	240	72.45999908447266
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_correlation_r:1_a:0.0_b:0.02_1	240	72.5199966430664
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_hint_r:1_a:0.0_b:100.0_1	240	72.52999877929688
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_factor_r:1_a:0.0_b:200.0_1	240	70.48999786376953
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_nst_r:1_a:0.0_b:50.0_1	240	73.15999603271484
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_1	240	72.93999481201172
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_vid_r:1_a:0.0_b:1.0_1	240	72.61000061035156
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_attention_r:1_a:0.0_b:1000.0_1	240	73.0
+
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_kd_r:0.1_a:0.9_b:0.0_2	240	71.25
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_kd_r:0.1_a:0.9_b:0.0_2	240	71.00999450683594
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_similarity_r:1_a:0.0_b:3000.0_2	240	70.25999450683594
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_factor_r:1_a:0.0_b:200.0_2	240	70.68000030517578
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_rkd_r:1_a:0.0_b:1.0_2	240	71.6199951171875
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_nst_r:1_a:0.0_b:50.0_2	240	71.37999725341797
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_correlation_r:1_a:0.0_b:0.02_2	240	72.75999450683594
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_fsp_r:1_a:0.0_b:50.0_2	240	71.3699951171875
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_hint_r:1_a:0.0_b:100.0_2	240	72.38999938964844
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_2	240	72.27999877929688
+
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_attention_r:1_a:0.0_b:1000.0_2	240	72.65999603271484
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_vid_r:1_a:0.0_b:1.0_2	240	72.44999694824219
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_attention_r:1_a:0.0_b:1000.0_2	240	72.47000122070312
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_abound_r:1_a:0.0_b:1.0_2	240	63.40999984741211
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_similarity_r:1_a:0.0_b:3000.0_2	240	70.55999755859375
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_vid_r:1_a:0.0_b:1.0_2	240	72.29999542236328
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_correlation_r:1_a:0.0_b:0.02_2	240	72.29000091552734
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_fsp_r:1_a:0.0_b:50.0_2	240	72.93000030517578
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_nst_r:1_a:0.0_b:50.0_2	240	71.79000091552734
+
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_nst_r:1_a:0.0_b:50.0_3	240	71.54000091552734
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_factor_r:1_a:0.0_b:200.0_3	240	70.6199951171875
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_fsp_r:1_a:0.0_b:50.0_3	240	71.30999755859375
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_similarity_r:1_a:0.0_b:3000.0_3	240	70.58000183105469
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_kd_r:0.1_a:0.9_b:0.0_3	240	70.6199951171875
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_rkd_r:1_a:0.0_b:1.0_3	240	72.54000091552734
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_correlation_r:1_a:0.0_b:0.02_3	240	72.0999984741211
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_hint_r:1_a:0.0_b:100.0_3	240	72.13999938964844
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_pkt_r:1_a:0.0_b:30000.0_3	240	72.72999572753906
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_vid_r:1_a:0.0_b:1.0_3	240	71.95999908447266
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_attention_r:1_a:0.0_b:1000.0_3	240	72.19999694824219
+S_CKD:wrn_16_2_T:wrn_40_2_cifar100_kd_r:0.1_a:0.9_b:0.0_3	240	66.66999816894531
+
+------
+NEW EXPERIMENT with standards settings
+

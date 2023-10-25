@@ -11,3 +11,5 @@ from .PKT import PKT
 from .RKD import RKDLoss
 from .SP import Similarity
 from .VID import VIDLoss
+from .IT import ITLoss
+from .dist_kd import DIST

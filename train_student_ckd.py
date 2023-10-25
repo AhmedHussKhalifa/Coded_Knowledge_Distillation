@@ -10,6 +10,7 @@ import socket
 import time
 
 import tensorboard_logger as tb_logger
+# import tensorboard_logger.tensorboard_logger as tb_logger
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -20,17 +21,19 @@ from models import model_dict
 from models.util import Embed, ConvReg, LinearEmbed
 from models.util import Connector, Translator, Paraphraser
 
-from dataset.cifar100 import get_cifar100_dataloaders, get_cifar100_dataloaders_sample
+from dataset.cifar100_ckd import get_cifar100_dataloaders, get_cifar100_dataloaders_sample, get_cifar100_dataloaders_CKD
 
 from helper.util import adjust_learning_rate
 
 from distiller_zoo import DistillKL, HintLoss, Attention, Similarity, Correlation, VIDLoss, RKDLoss
 from distiller_zoo import PKT, ABLoss, FactorTransfer, KDSVD, FSP, NSTLoss
+from distiller_zoo import ITLoss, DIST
 from crd.criterion import CRDLoss
 
-from helper.loops import train_distill as train, validate
+from helper.loops_ckd import train_distill as train, validate, validate_ckd 
 from helper.pretrain import init
 
+from dataset.ckd_selector import CKD_selector_parallel
 
 def parse_option():
 
@@ -40,9 +43,9 @@ def parse_option():
 
     parser.add_argument('--print_freq', type=int, default=100, help='print frequency')
     parser.add_argument('--tb_freq', type=int, default=500, help='tb frequency')
-    parser.add_argument('--save_freq', type=int, default=400, help='save frequency')
+    parser.add_argument('--save_freq', type=int, default=4000, help='save frequency')
     parser.add_argument('--batch_size', type=int, default=64, help='batch_size')
-    parser.add_argument('--num_workers', type=int, default=8, help='num of workers to use')
+    parser.add_argument('--num_workers', type=int, default=16, help='num of workers to use')
     parser.add_argument('--epochs', type=int, default=240, help='number of training epochs')
     parser.add_argument('--init_epochs', type=int, default=30, help='init training for two-stage methods')
 
@@ -67,8 +70,10 @@ def parse_option():
     # distillation
     parser.add_argument('--distill', type=str, default='kd', choices=['kd', 'hint', 'attention', 'similarity',
                                                                       'correlation', 'vid', 'crd', 'kdsvd', 'fsp',
-                                                                      'rkd', 'pkt', 'abound', 'factor', 'nst'])
+                                                                      'rkd', 'pkt', 'abound', 'factor', 'nst', 'itrd', 'dist'])
     parser.add_argument('--trial', type=str, default='1', help='trial id')
+    parser.add_argument('--ckd', type=str, default='', help='trial id')
+    parser.add_argument('--delta', type=int, default=5, help='trial id')
 
     parser.add_argument('-r', '--gamma', type=float, default=1, help='weight for classification')
     parser.add_argument('-a', '--alpha', type=float, default=None, help='weight balance for KD')
@@ -86,6 +91,16 @@ def parse_option():
 
     # hint layer
     parser.add_argument('--hint_layer', default=2, type=int, choices=[0, 1, 2, 3, 4])
+
+    # IT distillation
+    parser.add_argument('--lambda_corr', type=float, default=2.0, help='correlation loss weight')
+    parser.add_argument('--lambda_mutual', type=float, default=0.05, help='mutual information loss weight')
+    parser.add_argument('--alpha_it', type=float, default=1.50, help='Renyis alpha')
+
+    # DIST distillation
+    parser.add_argument('--dist_beta', type=float, default=1, help='weight for inter loss')
+    parser.add_argument('--dist_gamma', type=float, default=1, help='weight for intra loss')
+    parser.add_argument('--dist_tau', type=float, default=4, help='temperature for DIST distillation')
 
     opt = parser.parse_args()
 
@@ -108,7 +123,23 @@ def parse_option():
 
     opt.model_t = get_teacher_name(opt.path_t)
 
-    opt.model_name = 'S:{}_T:{}_{}_{}_r:{}_a:{}_b:{}_{}'.format(opt.model_s, opt.model_t, opt.dataset, opt.distill,
+    if opt.distill == 'kd':
+        opt.model_name = 'S_CKD:{}_T:{}_{}_{}_r:{}_a:{}_b:{}_T:{}_{}'.format(opt.model_s, opt.model_t, opt.dataset, opt.distill,
+                                                                opt.gamma, opt.alpha, opt.beta, opt.kd_T, opt.trial)
+    elif opt.distill == 'itrd':
+        opt.model_name = 'S_CKD:{}_T:{}_{}_{}_l_c:{}_l_m:{}_it_a:{}_{}'.format(opt.model_s, opt.model_t, opt.dataset, opt.distill,
+                                                                opt.lambda_corr, opt.lambda_mutual, opt.alpha_it, opt.trial)
+    elif opt.distill == 'dist':
+        opt.model_name = 'S_CKD:{}_T:{}_{}_{}_d_b:{}_d_g:{}_t_tau:{}_{}'.format(opt.model_s, opt.model_t, opt.dataset, opt.distill,
+                                                                opt.dist_beta, opt.dist_gamma, opt.dist_tau, opt.trial)
+    elif opt.distill == 'crd':
+        opt.model_name = 'S_CKD:{}_T:{}_{}_{}_r:{}_a:{}_b:{}_nce_k:{}_nce_t:{}_nce_m:{}_{}'.format(opt.model_s, opt.model_t, opt.dataset, opt.distill,
+                                                                opt.gamma, opt.alpha, opt.beta, opt.nce_k, opt.nce_t, opt.nce_m , opt.trial)
+    elif opt.distill =='hint':
+        opt.model_name = 'S_CKD:{}_T:{}_{}_{}_r:{}_a:{}_b:{}_layer:{}_{}'.format(opt.model_s, opt.model_t, opt.dataset, opt.distill,
+                                                                opt.gamma, opt.alpha, opt.beta, opt.hint_layer, opt.trial)
+    else:
+        opt.model_name = 'S_CKD:{}_T:{}_{}_{}_r:{}_a:{}_b:{}_{}'.format(opt.model_s, opt.model_t, opt.dataset, opt.distill,
                                                                 opt.gamma, opt.alpha, opt.beta, opt.trial)
 
     opt.tb_folder = os.path.join(opt.tb_path, opt.model_name)
@@ -130,12 +161,16 @@ def get_teacher_name(model_path):
     else:
         return segments[0] + '_' + segments[1] + '_' + segments[2]
 
+def get_CKD_path(model_path):
+    """parse teacher name"""
+    segments = model_path.split('/')[-1]
+    return model_path.replace(segments, "ckd_<train/val>.npz")
 
 def load_teacher(model_path, n_cls):
     print('==> loading teacher model')
     model_t = get_teacher_name(model_path)
     model = model_dict[model_t](num_classes=n_cls)
-    model.load_state_dict(torch.load(model_path)['model'])
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'))['model'])
     print('==> done')
     return model
 
@@ -148,25 +183,33 @@ def main():
     # tensorboard logger
     logger = tb_logger.Logger(logdir=opt.tb_folder, flush_secs=2)
 
-    # dataloader
     if opt.dataset == 'cifar100':
-        if opt.distill in ['crd']:
-            train_loader, val_loader, n_data = get_cifar100_dataloaders_sample(batch_size=opt.batch_size,
-                                                                               num_workers=opt.num_workers,
-                                                                               k=opt.nce_k,
-                                                                               mode=opt.mode)
-        else:
-            train_loader, val_loader, n_data = get_cifar100_dataloaders(batch_size=opt.batch_size,
-                                                                        num_workers=opt.num_workers,
-                                                                        is_instance=True)
         n_cls = 100
     else:
         raise NotImplementedError(opt.dataset)
-
     # model
     model_t = load_teacher(opt.path_t, n_cls)
     model_s = model_dict[opt.model_s](num_classes=n_cls)
 
+    # dataloader
+    if opt.dataset == 'cifar100':
+        if opt.ckd in ['ckd']:
+            train_loader, val_loader, n_data = get_cifar100_dataloaders_CKD(batch_size=opt.batch_size,
+                                                                        num_workers=opt.num_workers,
+                                                                        is_instance=True, model_t=model_t)
+        else:
+            if opt.distill in ['crd']:
+                train_loader, val_loader, n_data = get_cifar100_dataloaders_sample(batch_size=opt.batch_size,
+                                                                                num_workers=opt.num_workers,
+                                                                                k=opt.nce_k,
+                                                                                mode=opt.mode)
+            else:
+                train_loader, val_loader, n_data = get_cifar100_dataloaders(batch_size=opt.batch_size,
+                                                                            num_workers=opt.num_workers,
+                                                                            is_instance=True)
+    else:
+        raise NotImplementedError(opt.dataset)
+    
     data = torch.randn(2, 3, 32, 32)
     model_t.eval()
     model_s.eval()
@@ -208,6 +251,20 @@ def main():
         criterion_kd = PKT()
     elif opt.distill == 'kdsvd':
         criterion_kd = KDSVD()
+    
+    elif opt.distill == 'itrd':
+        opt.s_dim = feat_s[-1].shape[1]
+        opt.t_dim = feat_t[-1].shape[1]
+        opt.n_data = n_data
+        criterion_kd = ITLoss(opt)
+        module_list.append(criterion_kd)
+        trainable_list.append(criterion_kd)
+        module_list.append(criterion_kd.embed)
+        trainable_list.append(criterion_kd.embed)
+    
+    elif opt.distill == 'dist':
+        criterion_kd = DIST(opt.dist_beta, opt.dist_gamma, opt.dist_tau)
+    
     elif opt.distill == 'correlation':
         criterion_kd = Correlation()
         embed_s = LinearEmbed(feat_s[-1].shape[1], opt.feat_dim)
@@ -277,26 +334,51 @@ def main():
 
     # append teacher after optimizer to avoid weight_decay
     module_list.append(model_t)
-
+   
     if torch.cuda.is_available():
         module_list.cuda()
         criterion_list.cuda()
         cudnn.benchmark = True
-
+    
     # validate teacher accuracy
-    teacher_acc, _, _ = validate(val_loader, model_t, criterion_cls, opt)
-    print('teacher accuracy: ', teacher_acc)
+    # teacher_acc, _, _ = validate(val_loader, model_t, criterion_cls, opt)
+    # print('teacher accuracy: ', teacher_acc)
+
+
+    opt.ckd_model_t = get_CKD_path(opt.path_t)
+    ckd_selector = None
+    # if opt.ckd in ['ckd']:
+    
+    train_flag = True
+    dataset_size = len(train_loader.dataset)
+    ckd_selector = CKD_selector_parallel(dataset_size, train=train_flag, batch_size=opt.batch_size, \
+                                        num_workers=opt.num_workers, mode="loadOffline",\
+                                        ckd_model_t_path= opt.ckd_model_t, distill=opt.distill, k = opt.nce_k)
+    # To check if we improve the training responses [can be commented]
+    # ckd_loader = ckd_selector()
+    # teacher_acc, _, _ = validate_ckd(ckd_loader, model_t, criterion_cls, opt)
+    # print('coded teacher accuracy: ', teacher_acc)
+    # del ckd_loader
+    
+    # load the new dataset class with the dataloader 
+    train_loader = ckd_selector()
+
 
     # routine
     for epoch in range(1, opt.epochs + 1):
-
         adjust_learning_rate(epoch, opt, optimizer)
         print("==> training...")
+
+        # teacher_acc, _, _ = validate_ckd(train_loader, model_t, criterion_cls, opt)
+        # print('coded teacher accuracy: ', teacher_acc)
 
         time1 = time.time()
         train_acc, train_loss = train(epoch, train_loader, module_list, criterion_list, optimizer, opt)
         time2 = time.time()
         print('epoch {}, total time {:.2f}'.format(epoch, time2 - time1))
+
+        if train_loader is not None: 
+            ckd_selector.ckd_set.incermentEpoch()
 
         logger.log_value('train_acc', train_acc, epoch)
         logger.log_value('train_loss', train_loss, epoch)
@@ -328,24 +410,23 @@ def main():
                 'accuracy': test_acc,
             }
             save_file = os.path.join(opt.save_folder, 'ckpt_epoch_{epoch}.pth'.format(epoch=epoch))
-            # torch.save(state, save_file)
+            torch.save(state, save_file)
+        if best_acc <= 1 and epoch > 20:
+            break
+
         # if epoch > 20:
         #     break
     # This best accuracy is only for printing purpose.
     # The results reported in the paper/README is from the last epoch. 
     print('best accuracy:', best_acc)
     
-    exp_txt = open('experimetal_Results.txt', 'a+')
-    exp_txt.write(opt.model_name +"\t"+ str(epoch) + "\t" + str(best_acc.item()) + "\n") # Write some text
-    exp_txt.close() # Close the file
-
     dir_path = "./experiments/" + opt.model_s + "/"
     file_path = os.path.join(dir_path , opt.distill + ".txt") 
     # Check if the directory exists
     if not os.path.exists(dir_path):
         print("Directory does not exist. Creating directory...")
         os.makedirs(dir_path)
-    exp_txt = open(file_path, 'a+')
+    exp_txt = open(file_path, 'a+') #
     exp_txt.write(opt.model_name +"\t"+ str(epoch) + "\t" + str(best_acc.item()) + "\t" + str(test_acc.item()) + "\n") # Write some text
     exp_txt.close() # Close the file
 
