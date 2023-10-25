@@ -1,12 +1,12 @@
 # A Coded Knowledge Distillation framework for Image Classification Based on Adaptive JPEG Encoding
 
 
-Official implementation of paper A Coded Knowledge Distillation (CKD) framework for Image Classification Based on Adaptive JPEG Encoding , Submitted to [Pattern Recognition Journal](https://www.sciencedirect.com/journal/pattern-recognition).  
+Official implementation of paper A **Coded Knowledge Distillation** (CKD) framework for Image Classification Based on Adaptive JPEG Encoding , Submitted to [Pattern Recognition Journal](https://www.sciencedirect.com/journal/pattern-recognition).  
 By Ahmed H. Salamah, Shayan Mohajer Hamidi, En-Hui Yang.
 
 
 
-:fire: **CKD: a coded teacher, that see better.**
+:fire: **CKD: a coded teacher, who see better.**
 
 ## Updates  
 
@@ -53,7 +53,10 @@ This repo was tested with Ubuntu 20 LTS, Python 3.8, PyTorch 1.13, and CUDA 11.0
     sh scripts/fetch_pretrained_teachers.sh
     ```
    which will download and save the models to `save/models`
-   
+
+The pre-trained backbone weights follow .pth files downloaded from repositories of [CRD](https://github.com/HobbitLong/RepDistiller) and [SSKD](https://github.com/xuguodong03/SSKD).
+
+
 2. Run distillation by following commands in `scripts/run_cifar_distill.sh`. An example of running Geoffrey's original Knowledge Distillation (KD) is given by:
 
     ```
@@ -74,9 +77,7 @@ This repo was tested with Ubuntu 20 LTS, Python 3.8, PyTorch 1.13, and CUDA 11.0
     python train_student_ckd.py --path_t ./save/models/resnet32x4_vanilla/ckpt_epoch_240.pth --ckd ckd --distill kd --model_s resnet8x4 -a 0.1 -a 0.9 --trial 1
     ```
 
-4. Use pre-trained backbone and train all auxiliary classifiers. 
 
-The pre-trained backbone weights follow .pth files downloaded from repositories of [CRD](https://github.com/HobbitLong/RepDistiller) and [SSKD](https://github.com/xuguodong03/SSKD).
 
 This repo was based on [CRD](https://github.com/HobbitLong/RepDistiller) to ensure reproducibility. 
 
