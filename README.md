@@ -82,8 +82,8 @@ This repo was tested with Ubuntu 16.04.5 LTS, Python 3.5, PyTorch 0.4.0, and CUD
 
 The pre-trained backbone weights follow .pth files downloaded from repositories of [CRD](https://github.com/HobbitLong/RepDistiller) and [SSKD](https://github.com/xuguodong03/SSKD).
 
+This repo was based on [CRD](https://github.com/HobbitLong/RepDistiller).
+
+## Corresponding Author
+
 For any questions, please contact Ahmed H. Salamah (ahamsala@uwaterloo.ca).
-
-## Acknowledgement
-
-Thanks to Baoyun Peng for providing the code of CC and to Frederick Tung for verifying our reimplementation of SP. Thanks also go to authors of other papers who make their code publicly available.
