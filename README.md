@@ -1,7 +1,7 @@
 # A Coded Knowledge Distillation framework for Image Classification Based on Adaptive JPEG Encoding
 
 
-Official implementation of paper A Coded Knowledge Distillation (CKD) framework for Image Classification Based on Adaptive JPEG Encoding , Submitted to "[Pattern Recognition Journal]"(https://www.sciencedirect.com/journal/pattern-recognition).  
+Official implementation of paper A Coded Knowledge Distillation (CKD) framework for Image Classification Based on Adaptive JPEG Encoding , Submitted to [Pattern Recognition Journal](https://www.sciencedirect.com/journal/pattern-recognition).  
 By Ahmed H. Salamah, Shayan Mohajer Hamidi, En-Hui Yang.
 
 
@@ -12,7 +12,7 @@ By Ahmed H. Salamah, Shayan Mohajer Hamidi, En-Hui Yang.
 
 * **July 24, 2023**: Sumbitted to Pattern Recognition Journal.
 
-* **September 20, 2022**: Release code for semantic segmentation task.
+* **Ocotober 25, 2023**: Release code.
 
 ## Getting started  
 ### Clone training code  
