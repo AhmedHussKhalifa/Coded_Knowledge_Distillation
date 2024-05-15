@@ -6,7 +6,7 @@ By Ahmed H. Salamah, Shayan Mohajer Hamidi, En-Hui Yang.
 
 
 
-:fire: **CKD: a coded teacher, who see better.**
+:fire: **CKD: a coded teacher, teacher sees better.**
 
 ## Updates  
 
