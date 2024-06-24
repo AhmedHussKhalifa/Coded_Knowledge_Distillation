@@ -45,7 +45,7 @@ def parse_option():
     parser.add_argument('--print_freq', type=int, default=100, help='print frequency')
     parser.add_argument('--batch_size', type=int, default=64, help='batch_size')
     parser.add_argument('--num_workers', type=int, default=16, help='num of workers to use')
-    parser.add_argument('--epochs', type=int, default=240, help='number of training epochs')
+    parser.add_argument('--epochs', type=int, default=20, help='number of training epochs')
 
     # dataset
     parser.add_argument('--dataset', type=str, default='cifar100', choices=['cifar100'], help='dataset')
@@ -182,13 +182,13 @@ def genrate(process_id=0, lock=None):
         cudnn.benchmark = True
 
     train_flag = True
-    ckd_batch_size=100
+    ckd_batch_size=50
     ckd_selector = CKD_selector_parallel( dataset_size=len(train_loader.dataset), model=model_t.eval(), delta=opt.delta, train=train_flag, \
                                             ckd_batch_size=ckd_batch_size, num_workers=opt.num_workers,\
                                             mode="save_ckd", ckd_model_t_path= opt.ckd_model_t) #"save_ckd"
     ckd_selector.loadCompressedSet()
     ckd_selector.createContainers()
-    for i in range(0,13):
+    for i in range(0, opt.epochs):
         ckd_selector(process_id, lock)
 
 def main_multiprocess():

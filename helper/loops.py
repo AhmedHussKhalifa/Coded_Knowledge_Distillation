@@ -3,14 +3,19 @@ from __future__ import print_function, division
 import sys
 import time
 import torch
-
+import numpy as np
+import torch.nn.functional as F
+import torch.nn as nn
 from .util import AverageMeter, accuracy
+
+
+
 
 
 def train_vanilla(epoch, train_loader, model, criterion, optimizer, opt):
     """vanilla training"""
     model.train()
-
+    
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()

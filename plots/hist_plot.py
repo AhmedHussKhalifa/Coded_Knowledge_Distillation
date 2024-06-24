@@ -98,17 +98,21 @@ def main(method_names, data, filename, title, legend_flag=False):
     #               'Underlying Method'
     #               ]
     
-    legend_txt = ['Coded Teacher\nexploited in\nunderlying method',
-                  'TALD\nexploited in\nunderlying method',
+    legend_txt = ['Coded Teacher\non top of the\nunderlying method',
+                  'TALD\non top of the\nunderlying method',
                   'Underlying Method'
                   ]
+    # legend_txt = ['Coded Teacher\nexploited in\nunderlying method',
+    #             'TALD\nexploited in\nunderlying method',
+    #             'Underlying Method'
+    #             ]``
     plt.bar(bar_positions + 2*bar_width, algorithm3_data, bar_width, color=color_palette[2], label=legend_txt[0])
     plt.bar(bar_positions + bar_width, algorithm2_data, bar_width, color=color_palette[1], label=legend_txt[1])
     plt.bar(bar_positions, algorithm1_data, bar_width, color=color_palette[0], label=legend_txt[2])
     
     
 
-    plt.ylim(min(algorithm1_data) - 1, max(algorithm1_data) + 0.1)
+    plt.ylim(min(algorithm1_data) - 1, max(algorithm2_data) + 0.1)
 
     # # Adding labels and title
     # plt.xlabel('Methods')
@@ -119,20 +123,21 @@ def main(method_names, data, filename, title, legend_flag=False):
     plt.xticks(bar_positions + bar_width, method_names)
 
     # Adding legend
-    # legend = plt.legend(bbox_to_anchor=(1, 0.8), loc='best')
-    # # get the width of your widest label, since every label will need 
-    # # to shift by this amount after we align to the right
-    # # shift = max([t.get_window_extent().width for t in legend.get_texts()]) 
-    # shift = 1
-    # for t in legend.get_texts():
-    #     t.set_ha('left') # ha is alias for horizontalalignment
-    #     t.set_position((shift,0))
+    legend = plt.legend(bbox_to_anchor=(1, 0.8), loc='best')
+    # get the width of your widest label, since every label will need 
+    # to shift by this amount after we align to the right
+    # shift = max([t.get_window_extent().width for t in legend.get_texts()]) 
+    shift = 1
+    for t in legend.get_texts():
+        t.set_ha('left') # ha is alias for horizontalalignment
+        t.set_position((shift,0))
     # plt.legend(bbox_to_anchor=(0.5, h_space), loc='upper center', ncol=3)
     # Add legend with custom font properties
     # if legend_flag:   
     # plt.legend(prop={'family': 'Times New Roman', 'size': label_size},bbox_to_anchor=(0.5, h_space), loc='upper center', ncol=3)
 
     # Displaying the plot
+    # breakpoint()
     plt.savefig(filename+".png", dpi=600, bbox_inches='tight')
     plt.savefig(filename+".pdf", dpi=600, bbox_inches='tight')
     plt.figure()
@@ -203,7 +208,7 @@ if __name__ == "__main__":
             ]
     
     analysis(method_names, data, filename, title)
-    # main(method_names, data, filename, title)
+    main(method_names, data, filename, title)
 
 
     filename = "wrn_40_2__wrn16_2"

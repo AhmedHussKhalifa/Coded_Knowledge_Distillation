@@ -66,7 +66,7 @@ class CIFAR100Instance(datasets.CIFAR100):
         return img, target, index
 
 
-def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False):
+def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False, shuffle=True):
     """
     cifar 100
     """
@@ -96,7 +96,7 @@ def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False):
                                       transform=train_transform)
     train_loader = DataLoader(train_set,
                               batch_size=batch_size,
-                              shuffle=True,
+                              shuffle=shuffle,
                               num_workers=num_workers)
 
     test_set = datasets.CIFAR100(root=data_folder,
@@ -200,7 +200,7 @@ class CIFAR100InstanceSample(datasets.CIFAR100):
 
 
 def get_cifar100_dataloaders_sample(batch_size=128, num_workers=8, k=4096, mode='exact',
-                                    is_sample=True, percent=1.0):
+                                    is_sample=True, percent=1.0, shuffle=True):
     """
     cifar 100
     """
@@ -228,7 +228,7 @@ def get_cifar100_dataloaders_sample(batch_size=128, num_workers=8, k=4096, mode=
     n_data = len(train_set)
     train_loader = DataLoader(train_set,
                               batch_size=batch_size,
-                              shuffle=True,
+                              shuffle=shuffle,
                               num_workers=num_workers)
 
     test_set = datasets.CIFAR100(root=data_folder,

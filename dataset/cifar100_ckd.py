@@ -60,7 +60,7 @@ class CIFAR100Instance(datasets.CIFAR100):
         # return imgs_extra, target_out, index
         return img, target, index
 
-def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False, model=None):
+def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False, model=None, shuffle=True):
     """
     cifar 100
     """
@@ -90,7 +90,7 @@ def get_cifar100_dataloaders(batch_size=128, num_workers=8, is_instance=False, m
                                       transform=train_transform)
     train_loader = DataLoader(train_set,
                               batch_size=batch_size,
-                              shuffle=True,
+                              shuffle=shuffle,
                               num_workers=num_workers)
 
     test_set = datasets.CIFAR100(root=data_folder,
@@ -112,7 +112,7 @@ def custom_collate_fn(batch):
     paths = [item[1] for item in batch]
     return images, paths
     
-def get_cifar100_dataloaders_CKD(batch_size=128, num_workers=8, is_instance=False, model_t=None):
+def get_cifar100_dataloaders_CKD(batch_size=128, num_workers=8, is_instance=False, model_t=None, shuffle=True):
     """
     cifar 100
     """
@@ -145,8 +145,9 @@ def get_cifar100_dataloaders_CKD(batch_size=128, num_workers=8, is_instance=Fals
 
     train_loader = DataLoader(train_set,
                               batch_size=batch_size,
-                              shuffle=True,
+                              shuffle=shuffle,
                               num_workers=num_workers)
+    
     # Default
     test_set = datasets.CIFAR100(root=data_folder,
                                  download=True,

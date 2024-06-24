@@ -442,7 +442,7 @@ class CIFAR100Dataset_simple(datasets.CIFAR100):
 
 class CKD_selector_parallel(object):
     def __init__(self, dataset_size, model=None, delta=5, train=False, ckd_batch_size=100, batch_size=64, num_workers=16, \
-                 mode="online", ckd_model_t_path="", distill='', k=16384):
+                 mode="online", ckd_model_t_path="", distill='', k=16384, shuffle=True):
         print("... CKD_selector_parallel ...")
         self.train = train
         self.model = model
@@ -476,7 +476,7 @@ class CKD_selector_parallel(object):
 
         if self.train:
             self.transform = transform_new
-            self.shuffle = True
+            self.shuffle = shuffle
             self.ckd_model_t_path = ckd_model_t_path.replace("<train/val>", "train")
             print("==> Random Augmentation")
         
@@ -710,9 +710,11 @@ class CKD_selector_parallel(object):
         output = self.model(self.data_tensor[:data_tensor_window].float())
         _, pred = output.topk(1, 1, True, True)
         pred = pred.t()
-        correct = pred.eq(self.target_tensor[:data_tensor_window].view(1, -1).expand_as(pred))
+        # correct = pred.eq(self.target_tensor[:data_tensor_window].view(1, -1).expand_as(pred))
+        # this line if we want to include all QF in the selection process 
+        correct = torch.BoolTensor(len(self.target_tensor)).unsqueeze(0).cuda()
+        
         correct_indexes = torch.nonzero(correct[0]).squeeze(1)
-
         ref_kl =  torch.zeros(correct_indexes.size(0), output.size(1), dtype=torch.float32).cuda()
         window = (len(self.QF_range) + 1)
         count_correct_per_image = torch.zeros(len(target), dtype=torch.int)
