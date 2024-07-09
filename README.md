@@ -32,14 +32,11 @@ This repo:
     via Attention Transfer  
 (SP) - Similarity-Preserving Knowledge Distillation  
 (CC) - Correlation Congruence for Knowledge Distillation  
-(VID) - Variational Information Distillation for Knowledge Transfer  
 (RKD) - Relational Knowledge Distillation  
-(PKT) - Probabilistic Knowledge Transfer for deep representation learning  
 (AB) - Knowledge Transfer via Distillation of Activation Boundaries Formed by Hidden Neurons  
 (FT) - Paraphrasing Complex Network: Network Compression via Factor Transfer  
 (FSP) - A Gift from Knowledge Distillation:
-    Fast Optimization, Network Minimization and Transfer Learning  
-(NST) - Like what you like: knowledge distill via neuron selectivity transfer 
+    Fast Optimization, Network Minimization and Transfer Learning 
 
 ## Installation
 
